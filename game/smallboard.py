@@ -31,7 +31,7 @@ class SmallBoard:
         self._update_status()
     
     def make_move(self, position: Tuple[int, int], player: Cell):
-        self._make_move(self, self.coords_to_index(position[0], position[1]), player)
+        self._make_move(self.coords_to_index(position[0], position[1]), player)
     
     def legal_moves(self) -> List[Tuple[int, int]]:
         if self.winner is not None or self.is_full:
