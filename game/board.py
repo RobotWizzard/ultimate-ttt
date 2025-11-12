@@ -40,7 +40,7 @@ class Board:
         else:
             self.active_board = None
 
-        self.winner = self._check_winner()
+        self.winner, _ = self._check_winner()
         self.to_move = other(self.to_move)
     
     def make_move(self, big_pos: Tuple[int, int], small_pos: Tuple[int, int]):
@@ -62,13 +62,21 @@ class Board:
     def is_terminal(self) -> bool:
         """Check if the game is over."""
         return self.winner is not None or all(board.is_full or board.winner is not None for board in self.boards)
+
+    def get_winner(self) -> Optional[tuple[Cell, tuple[tuple[int, int], tuple[int, int], tuple[int, int]]]]:
+        """Return the winner of the game and the winning combination, or None if no winner."""
+        winner, combo = self._check_winner()
+        if winner is not None:
+            winning_coords = tuple((self.index_to_coords(i) for i in combo))
+            return winner, winning_coords
+        return None, None
     
     def _check_winner(self) -> Optional[Cell]:
         for combo in self.WIN_COMBINATIONS:
             if (self.global_board[combo[0]] != Cell.EMPTY and
                 self.global_board[combo[0]] == self.global_board[combo[1]] == self.global_board[combo[2]]):
-                return self.global_board[combo[0]]
-        return None
+                return self.global_board[combo[0]], combo
+        return None, None
 
     def copy(self) -> 'Board':
         """Create a deep copy of the board state."""
