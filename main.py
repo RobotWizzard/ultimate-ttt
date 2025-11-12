@@ -1,9 +1,9 @@
 import pygame
-from ui.scene_manager import SceneManager
-from ui.menu_scene import MenuScene
 
 def main():
     pygame.init()
+    from ui.scenes import SceneManager, MenuScene
+    
     screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption("Ultimate Tic-Tac-Toe")
     pygame.display.set_icon(pygame.image.load("ui/assets/icon.png").convert_alpha())

@@ -1,6 +1,6 @@
 import pygame
 from .scene import Scene
-from .components import Button
+from ui.components import Button
 
 class MenuScene(Scene):
     def __init__(self, screen, manager):

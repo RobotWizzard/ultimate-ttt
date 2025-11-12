@@ -1,5 +1,5 @@
 import pygame
-from .config import DEFAULT_FONT
+from ui.config import DEFAULT_FONT
 
 class EvalBar:
     def __init__(self, x, y, width, height, font=DEFAULT_FONT):

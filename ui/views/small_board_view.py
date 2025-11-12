@@ -2,8 +2,8 @@ import pygame
 from game.smallboard import SmallBoard
 from game.board import Board
 from utils.cell import Cell
-from .components import Button
-from .config import HIGHLIGHT_COLOR, X_COLOR, O_COLOR, DEFAULT_FONT
+from ui.components import Button
+from ui.config import HIGHLIGHT_COLOR, X_COLOR, O_COLOR, DEFAULT_FONT
 
 class SmallBoardView:
     def __init__(self, board:SmallBoard, pos:tuple[int, int], size:int,

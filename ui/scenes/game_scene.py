@@ -1,11 +1,12 @@
 import pygame
 from .scene import Scene
-from .components import CheckboxWithLabel, Dropdown, Button
-from .board_view import BoardView
-from .eval_bar import EvalBar
-from .config import DEFAULT_FONT
+from ui.components import CheckboxWithLabel, Dropdown, Button, EvalBar
+from ui.views import BoardView
+from ui.config import DEFAULT_FONT
 from game.board import Board
 from ai.random_agent import RandomAgent
+from ai.minimax_agent import MinimaxAgent
+from ai.eval import simple_eval
 from utils.cell import Cell
 
 class GameScene(Scene):
@@ -53,8 +54,8 @@ class GameScene(Scene):
             self.agent1 = None
         elif agent_type == "random":
             self.agent1 = RandomAgent()
-        # elif agent_type == "minimax":
-        #     self.agent1 = MinimaxAgent()
+        elif agent_type == "minimax":
+            self.agent1 = MinimaxAgent(simple_eval)
         # elif agent_type == "mcts":
         #     self.agent1 = MCTSAgent()
 
@@ -63,8 +64,8 @@ class GameScene(Scene):
             self.agent2 = None
         elif agent_type == "random":
             self.agent2 = RandomAgent()
-        # elif agent_type == "minimax":
-        #     self.agent2 = MinimaxAgent()
+        elif agent_type == "minimax":
+            self.agent2 = MinimaxAgent(simple_eval)
         # elif agent_type == "mcts":
         #     self.agent2 = MCTSAgent()
 
@@ -78,11 +79,11 @@ class GameScene(Scene):
 
     def update(self):
         if not self.board.is_terminal() and self.agent1 is not None and self.board.to_move == Cell.X:
-            move = self.agent1.choose_move(self.board)
+            move = self.agent1.choose_move(self.board.copy())
             if move is not None:
                 self.board.make_move(*move)
         if not self.board.is_terminal() and self.agent2 is not None and self.board.to_move == Cell.O:
-            move = self.agent2.choose_move(self.board)
+            move = self.agent2.choose_move(self.board.copy())
             if move is not None:
                 self.board.make_move(*move)
         self.board_view.update()
