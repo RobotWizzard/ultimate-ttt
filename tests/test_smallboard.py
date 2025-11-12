@@ -88,3 +88,12 @@ def test_legal_moves_full_board():
         board._make_move(i, Cell.X if i % 2 == 0 else Cell.O)
     assert board.is_full
     assert board.legal_moves() == []
+
+# --- Undo move ---
+def test_undo_move_resets_cell():
+    sb = SmallBoard()
+    sb.make_move((1, 1), Cell.O)
+    sb.undo_move(sb.coords_to_index(1, 1))
+    assert sb.cells[sb.coords_to_index(1, 1)] == Cell.EMPTY
+    assert sb.winner is None
+    assert not sb.is_full

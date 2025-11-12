@@ -16,6 +16,8 @@ class Board:
         self.active_board: Optional[int] = None  # 0..8 or None meaning "any"
         self.to_move: Cell = Cell.X
         self.winner: Optional[Cell] = None
+        self.move_history: List[Tuple[int, int, Optional[int], Cell]] = [] 
+        # Each move is (big_idx, small_idx, prev_active, prev_global)
     
     @staticmethod
     def index_to_coords(index: int) -> Tuple[int, int]:
@@ -39,6 +41,8 @@ class Board:
             self.active_board = small_pos
         else:
             self.active_board = None
+        
+        self.move_history.append((big_pos, small_pos, self.to_move, board.winner))
 
         self.winner, _ = self._check_winner()
         self.to_move = other(self.to_move)
@@ -47,6 +51,14 @@ class Board:
         """Make a move given big and small board coordinates."""
         self._make_move(self.coords_to_index(big_pos[0], big_pos[1]),
                        self.coords_to_index(small_pos[0], small_pos[1]))
+    
+    def undo_move(self):
+        big_pos, small_pos, prev_active, prev_global = self.move_history.pop()
+        self.to_move = other(self.to_move)
+        sb = self.boards[big_pos]
+        sb.undo_move(small_pos)
+        self.global_board[big_pos] = prev_global
+        self.active_board = prev_active
     
     def legal_moves(self) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
         """Return a list of legal moves as ((big_row, big_col), (small_row, small_col))."""

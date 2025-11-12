@@ -2,6 +2,7 @@ import pytest
 from utils.cell import Cell
 from game.smallboard import SmallBoard
 from game.board import Board
+from utils.cell import other
 
 
 # --- Initialization ---
@@ -65,13 +66,13 @@ def test_make_move_updates_global_board_when_smallboard_wins():
 def test_check_winner_detects_three_in_a_row():
     b = Board()
     b.global_board[0] = b.global_board[1] = b.global_board[2] = Cell.X
-    assert b._check_winner() == Cell.X
+    assert b._check_winner() == (Cell.X, (0, 1, 2))
 
 def test_check_winner_returns_none_if_no_winner():
     b = Board()
     b.global_board[0] = Cell.X
     b.global_board[1] = Cell.O
-    assert b._check_winner() is None
+    assert b._check_winner() == (None, None)
 
 
 # --- Legal moves ---
@@ -113,6 +114,17 @@ def test_is_not_terminal_while_boards_open():
     b = Board()
     b.boards[0].is_full = True
     assert not b.is_terminal()
+
+
+# --- Undo move ---
+def test_undo_move_restores_state():
+    b = Board()
+    b._make_move(0, 0)
+    prev_to_move = b.to_move
+    b.undo_move()
+    assert b.to_move == other(prev_to_move)
+    assert b.boards[0].cells[0] == Cell.EMPTY
+    assert len(b.move_history) == 0
 
 
 # --- Copy behavior ---

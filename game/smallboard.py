@@ -33,6 +33,12 @@ class SmallBoard:
     def make_move(self, position: Tuple[int, int], player: Cell):
         self._make_move(self.coords_to_index(position[0], position[1]), player)
     
+    def undo_move(self, pos: int):
+        self.cells[pos] = Cell.EMPTY
+        self.winner = None
+        self.is_full = False
+        self._update_status()
+    
     def legal_moves(self) -> List[Tuple[int, int]]:
         if self.winner is not None or self.is_full:
             return []
