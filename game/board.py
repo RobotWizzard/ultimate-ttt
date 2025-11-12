@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple
 from utils.cell import Cell, other
 from game.smallboard import SmallBoard
 
-class Board:
+class Board:  # TODO: faster implementation with bitboards
     # 0 1 2
     # 3 4 5
     # 6 7 8
@@ -31,6 +31,9 @@ class Board:
         """Make a move given big and small board indices."""
         if self.active_board is not None and big_pos != self.active_board:
                 raise ValueError("Must play in the active board")
+        
+        prev_active = self.active_board
+        prev_global = self.global_board[big_pos]
 
         board = self.boards[big_pos]
         board._make_move(small_pos, self.to_move)
@@ -42,7 +45,7 @@ class Board:
         else:
             self.active_board = None
         
-        self.move_history.append((big_pos, small_pos, self.to_move, board.winner))
+        self.move_history.append((big_pos, small_pos, prev_active, prev_global))
 
         self.winner, _ = self._check_winner()
         self.to_move = other(self.to_move)
@@ -126,4 +129,6 @@ class Board:
                 rows.append(' '.join(row_cells))
             if big_row < 2:
                 rows.append('-' * 21)
+        rows.append(f"To move: {self.to_move}")
+        rows.append(f"Active board: {self.active_board}")
         return '\n'.join(rows)
