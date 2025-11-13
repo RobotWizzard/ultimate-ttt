@@ -1,5 +1,5 @@
 import pytest
-from utils.cell import Cell, other
+from game.cell import Cell, other
 
 def test_other_function():
     assert other(Cell.X) == Cell.O

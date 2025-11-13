@@ -1,8 +1,8 @@
 import pytest
-from utils.cell import Cell
+from game.cell import Cell
 from game.smallboard import SmallBoard
 from game.board import Board
-from utils.cell import other
+from game.cell import other
 
 
 # --- Initialization ---

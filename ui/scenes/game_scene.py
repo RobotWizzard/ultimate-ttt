@@ -7,7 +7,7 @@ from game.board import Board
 from ai.random_agent import RandomAgent
 from ai.minimax_agent import MinimaxAgent
 from ai.eval import simple_eval
-from utils.cell import Cell
+from game.cell import Cell
 
 class GameScene(Scene):
     def __init__(self, screen, manager):

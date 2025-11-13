@@ -1,5 +1,5 @@
 import pytest
-from utils.cell import Cell
+from game.cell import Cell
 from game.smallboard import SmallBoard
 
 

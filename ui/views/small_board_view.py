@@ -1,7 +1,7 @@
 import pygame
 from game.smallboard import SmallBoard
 from game.board import Board
-from utils.cell import Cell
+from game.cell import Cell
 from ui.components import Button
 from ui.config import HIGHLIGHT_COLOR, X_COLOR, O_COLOR, DEFAULT_FONT
 

@@ -1,5 +1,5 @@
 from game.board import Board
-from utils.cell import Cell
+from game.cell import Cell
 
 def simple_eval(board:Board) -> float:
     # --- Terminal states ---

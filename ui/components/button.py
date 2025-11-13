@@ -1,7 +1,8 @@
 import pygame
+from ui.config import DEFAULT_FONT
 
 class Button:
-    def __init__(self, rect:pygame.typing.RectLike, text:str, font:pygame.font.Font,
+    def __init__(self, rect:pygame.typing.RectLike, text:str, font:pygame.font.Font=DEFAULT_FONT,
                  bg_color:pygame.typing.ColorLike=(100, 100, 100), text_color:pygame.typing.ColorLike=(255, 255, 255),
                  hover_color:pygame.typing.ColorLike=(50, 50, 50),
                  on_click:callable=None):

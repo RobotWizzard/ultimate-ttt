@@ -1,7 +1,8 @@
 import pygame
+from ui.config import DEFAULT_FONT
 
 class Dropdown:
-    def __init__(self, rect:pygame.typing.RectLike, options:list[str], font:pygame.font.Font,
+    def __init__(self, rect:pygame.typing.RectLike, options:list[str], font:pygame.font.Font=DEFAULT_FONT,
                  bg_color:pygame.typing.ColorLike=(200, 200, 200),
                  options_color:pygame.typing.ColorLike=(220, 220, 220), 
                  text_color:pygame.typing.ColorLike=(0, 0, 0),
@@ -48,3 +49,6 @@ class Dropdown:
                         break
                 else:
                     self.is_open = False
+    
+    def get_text(self):
+        return self.options[self.selected_index]

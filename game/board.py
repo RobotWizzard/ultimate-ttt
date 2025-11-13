@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple
-from utils.cell import Cell, other
+from game.cell import Cell, other
 from game.smallboard import SmallBoard
 
 class Board:  # TODO: faster implementation with bitboards

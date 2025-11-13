@@ -17,9 +17,9 @@ def main():
     running = True
     while running:
         for event in pygame.event.get():
+            manager.handle_event(event)
             if event.type == pygame.QUIT:
                 running = False
-            manager.handle_event(event)
 
         manager.update()
         manager.draw()

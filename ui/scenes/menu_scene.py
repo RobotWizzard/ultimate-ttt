@@ -26,19 +26,36 @@ class MenuScene(Scene):
             hover_color=(200, 200, 200),
             on_click=None
         )
+
+        self.compare_agents_button = Button(
+            rect=(250, 390, 300, 60),
+            text="Compare Agents",
+            font=pygame.font.SysFont("Berlin Sans FB", 36),
+            bg_color=(220, 220, 220),
+            text_color=(0, 0, 0),
+            hover_color=(200, 200, 200),
+            on_click=self.compare_agents
+        )
     
     def start_game(self):
         from .game_scene import GameScene
         game_scene = GameScene(self.screen, self.manager)
         self.manager.set_scene(game_scene)
     
+    def compare_agents(self):
+        from .compare_config_scene import CompareConfigScene
+        compare_config_scene = CompareConfigScene(self.screen, self.manager)
+        self.manager.set_scene(compare_config_scene)
+    
     def update(self):
         self.start_button.update()
         self.analyse_game_button.update()
+        self.compare_agents_button.update()
 
     def handle_event(self, event):
         self.start_button.handle_event(event)
         self.analyse_game_button.handle_event(event)
+        self.compare_agents_button.handle_event(event)
 
     def draw(self):
         self.screen.fill((250, 250, 250))
@@ -46,3 +63,4 @@ class MenuScene(Scene):
         self.screen.blit(title, (80, 100))
         self.start_button.draw(self.screen)
         self.analyse_game_button.draw(self.screen)
+        self.compare_agents_button.draw(self.screen)
