@@ -45,6 +45,35 @@ def test_legal_moves_restricts_to_active_board(empty_board):
     big_boards = {decode_move(m)[0] for m in moves}
     assert big_boards == {4}  # only active board allowed
 
+def test_legal_moves_skips_won_boards(empty_board):
+    board = empty_board
+
+    # Make some moves to win small board 0 for X
+    sb0_moves = [0, 3, 1, 4, 2]  # X will win top row
+    player = Cell.X
+    for pos in sb0_moves:
+        board.make_move(encode_move(0, pos))
+        player = Cell.O if player == Cell.X else Cell.X
+        board.to_move = player
+
+    # Active board is None so it would normally include all boards
+    board.active_board = None
+    moves = board.legal_moves()
+
+    # Check that no move is in board 0 (already won)
+    for move in moves:
+        big, small = decode_move(move)
+        assert big != 0
+
+    # Check that moves are only from boards that are not full/won
+    for big in range(1, 9):
+        sb = board.small_boards[big]
+        mask = sb.legal_moves_mask()
+        for move in moves:
+            b, s = decode_move(move)
+            if b == big:
+                assert mask & (1 << s)
+
 
 def test_global_winner_detection(empty_board):
     b = empty_board

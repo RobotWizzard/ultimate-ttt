@@ -1,4 +1,5 @@
 import pygame
+import time
 from .scene import Scene
 from ui.components import CheckboxWithLabel, Dropdown, Button, EvalBar
 from ui.views import BoardView
@@ -82,10 +83,12 @@ class GameScene(Scene):
             move = self.agent1.choose_move(self.board.copy())
             if move is not None:
                 self.board.make_move(move)
+                time.sleep(0.1)
         if not self.board.is_terminal() and self.agent2 is not None and self.board.to_move == Cell.O:
             move = self.agent2.choose_move(self.board.copy())
             if move is not None:
                 self.board.make_move(move)
+                time.sleep(0.1)
         self.board_view.update()
         self.new_game_button.update()
         self.back_button.update()

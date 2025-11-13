@@ -49,7 +49,12 @@ class Board:
 
     def legal_moves(self) -> list[int]:
         moves = []
-        boards_to_check = [self.active_board] if self.active_board is not None else range(9)
+
+        if self.active_board is not None:
+            boards_to_check = [self.active_board]
+        else:
+            boards_to_check = [i for i, sb in enumerate(self.small_boards) if sb.winner is None]
+
         for big in boards_to_check:
             sb = self.small_boards[big]
             mask = sb.legal_moves_mask()
