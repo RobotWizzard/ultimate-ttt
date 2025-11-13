@@ -81,11 +81,11 @@ class GameScene(Scene):
         if not self.board.is_terminal() and self.agent1 is not None and self.board.to_move == Cell.X:
             move = self.agent1.choose_move(self.board.copy())
             if move is not None:
-                self.board.make_move(*move)
+                self.board.make_move(move)
         if not self.board.is_terminal() and self.agent2 is not None and self.board.to_move == Cell.O:
             move = self.agent2.choose_move(self.board.copy())
             if move is not None:
-                self.board.make_move(*move)
+                self.board.make_move(move)
         self.board_view.update()
         self.new_game_button.update()
         self.back_button.update()

@@ -1,150 +1,103 @@
 import pytest
-from game.cell import Cell
-from game.smallboard import SmallBoard
+from game.cell import Cell, other
 from game.board import Board
-from game.cell import other
+from utils.utils import encode_move, decode_move
 
 
-# --- Initialization ---
-def test_initial_state():
-    b = Board()
-    assert len(b.boards) == 9
-    assert all(isinstance(sb, SmallBoard) for sb in b.boards)
-    assert b.global_board == [Cell.EMPTY] * 9
-    assert b.active_board is None
-    assert b.to_move == Cell.X
+@pytest.fixture
+def empty_board():
+    return Board()
+
+
+def test_initial_state(empty_board):
+    b = empty_board
     assert b.winner is None
-
-
-# --- Coordinate conversions ---
-@pytest.mark.parametrize("index,expected", [
-    (0, (0, 0)), (1, (0, 1)), (2, (0, 2)),
-    (3, (1, 0)), (4, (1, 1)), (5, (1, 2)),
-    (6, (2, 0)), (7, (2, 1)), (8, (2, 2)),
-])
-def test_index_to_coords_and_back(index, expected):
-    assert Board.index_to_coords(index) == expected
-    assert Board.coords_to_index(*expected) == index
-
-
-# --- Move mechanics ---
-def test_make_move_basic():
-    b = Board()
-    b._make_move(0, 4)  # play in top-left board, center cell
-    sb = b.boards[0]
-    assert sb.cells[4] == Cell.X
-    assert b.to_move == Cell.O
-    assert b.active_board == 4  # next player must play in board 4
-
-
-def test_make_move_enforces_active_board():
-    b = Board()
-    b._make_move(0, 4)
-    with pytest.raises(ValueError):
-        b._make_move(1, 0)  # must play in board 4 now
-
-
-def test_make_move_sets_active_none_when_target_full():
-    b = Board()
-    # pretend board 4 (target) is full
-    b.boards[4].is_full = True
-    b._make_move(0, 4)
+    assert b.to_move == Cell.X
     assert b.active_board is None
+    assert len(b.small_boards) == 9
+    assert all(sb.winner is None for sb in b.small_boards)
+    assert all(sb.x_bits == 0 and sb.o_bits == 0 for sb in b.small_boards)
 
 
-def test_make_move_updates_global_board_when_smallboard_wins():
-    b = Board()
-    # simulate a win in board 0
-    sb = b.boards[0]
-    sb.winner = Cell.X
-    b.global_board[0] = Cell.X
-    b._make_move(0, 4)
-    assert b.global_board[0] == Cell.X
+def test_make_move_updates_board_and_turn(empty_board):
+    b = empty_board
+    move = encode_move(0, 0)
+    b.make_move(move)
+
+    big, small = decode_move(b.move_history[-1][0])
+    assert (big, small) == (0, 0)
+    sb = b.small_boards[0]
+    assert sb.x_bits & (1 << 0)
+    assert b.to_move == Cell.O
 
 
-# --- Global winner detection ---
-def test_check_winner_detects_three_in_a_row():
-    b = Board()
-    b.global_board[0] = b.global_board[1] = b.global_board[2] = Cell.X
-    assert b._check_winner() == (Cell.X, (0, 1, 2))
-
-def test_check_winner_returns_none_if_no_winner():
-    b = Board()
-    b.global_board[0] = Cell.X
-    b.global_board[1] = Cell.O
-    assert b._check_winner() == (None, None)
+def test_active_board_update(empty_board):
+    b = empty_board
+    # move to cell 4 in small board 0 → active board = 4
+    b.make_move(encode_move(0, 4))
+    assert b.active_board == 4
 
 
-# --- Legal moves ---
-def test_legal_moves_any_board_initial():
-    b = Board()
+def test_legal_moves_restricts_to_active_board(empty_board):
+    b = empty_board
+    b.make_move(encode_move(0, 4))
     moves = b.legal_moves()
-    assert len(moves) == 9 * 9
-    assert ((0, 0), (0, 0)) in moves
-
-def test_legal_moves_only_active_board():
-    b = Board()
-    b.active_board = 4
-    moves = b.legal_moves()
-    assert all(big == (1, 1) for big, _ in moves)
+    big_boards = {decode_move(m)[0] for m in moves}
+    assert big_boards == {4}  # only active board allowed
 
 
-def test_legal_moves_excludes_won_and_full_boards():
-    b = Board()
-    b.boards[0].winner = Cell.X
-    b.boards[1].is_full = True
-    moves = b.legal_moves()
-    # boards 0 and 1 should not appear
-    assert all(Board.coords_to_index(*big) not in (0, 1) for big, _ in moves)
+def test_global_winner_detection(empty_board):
+    b = empty_board
+    # simulate top row of small boards won by X
+    for i in [0, 1, 2]:
+        sb = b.small_boards[i]
+        sb.x_bits = 0b111_000_000  # fill top row
+        sb.winner = Cell.X
+    b._recompute_global_bits()
+    b._update_global_winner()
+    assert b.winner == Cell.X
 
 
-# --- Terminal state ---
-def test_is_terminal_when_winner():
-    b = Board()
-    b.winner = Cell.X
-    assert b.is_terminal()
+def test_undo_move_restores_state(empty_board):
+    b = empty_board
+    move = encode_move(0, 0)
+    b.make_move(move)
+    b.undo_move()
+    sb = b.small_boards[0]
+    assert sb.x_bits == 0
+    assert sb.o_bits == 0
+    assert b.to_move == Cell.X
+    assert b.active_board is None
+    assert b.move_history == []
 
-def test_is_terminal_when_all_boards_finished():
-    b = Board()
-    for sb in b.boards:
-        sb.is_full = True
-    assert b.is_terminal()
 
-def test_is_not_terminal_while_boards_open():
-    b = Board()
-    b.boards[0].is_full = True
+def test_copy_returns_independent_board(empty_board):
+    b = empty_board
+    b.make_move(encode_move(0, 0))
+    b_copy = b.copy()
+
+    # Mutate original
+    b.small_boards[0].x_bits |= 1 << 1
+    assert b_copy.small_boards[0].x_bits & (1 << 1) == 0  # copy unaffected
+    assert b_copy.to_move == b.to_move  # copy preserves turn
+
+
+def test_is_terminal_detection(empty_board):
+    b = empty_board
+    # Not terminal at start
     assert not b.is_terminal()
 
+    # simulate global winner
+    for i in [0, 1, 2]:
+        sb = b.small_boards[i]
+        sb.x_bits = 0b111_000_000
+        sb.winner = Cell.X
+    b._recompute_global_bits()
+    b._update_global_winner()
+    assert b.is_terminal()
 
-# --- Undo move ---
-def test_undo_move_restores_state():
+    # Reset and fill all small boards → terminal
     b = Board()
-    b._make_move(0, 0)
-    prev_to_move = b.to_move
-    b.undo_move()
-    assert b.to_move == other(prev_to_move)
-    assert b.boards[0].cells[0] == Cell.EMPTY
-    assert len(b.move_history) == 0
-
-
-# --- Copy behavior ---
-def test_copy_creates_independent_clone():
-    b1 = Board()
-    b1._make_move(0, 0)
-    b2 = b1.copy()
-    assert b1 is not b2
-    assert b1.boards[0] is not b2.boards[0]
-    assert b1.boards[0].cells == b2.boards[0].cells
-    # mutate clone and ensure original unchanged
-    b2.boards[0].cells[0] = Cell.O
-    assert b1.boards[0].cells[0] != Cell.O
-
-
-# --- String representation ---
-# def test_str_contains_grid_lines_and_symbols():
-#     b = Board()
-#     s = str(b)
-#     assert isinstance(s, str)
-#     assert '|' in s
-#     assert '-' in s
-#     assert s.count('.') == 9 * 9
+    for sb in b.small_boards:
+        sb.is_full = True
+    assert b.is_terminal()

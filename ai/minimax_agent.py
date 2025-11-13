@@ -1,6 +1,7 @@
 from heapq import nlargest
 from .agent import Agent
 from game.board import Board
+from utils.utils import Move
 
 class MinimaxAgent(Agent):
     INF = 90129012
@@ -10,16 +11,16 @@ class MinimaxAgent(Agent):
         self.time_limit = time_limit
 
 
-    def choose_move(self, board:Board) -> tuple[tuple[int, int], tuple[int, int]]:
+    def choose_move(self, board:Board) -> Move:
         return self.calculate_lines(board, 5, n=1)[0][1][0]
     
 
-    def calculate_lines(self, board:Board, max_depth:int, n:int=1) -> list[tuple[float, list[tuple[tuple[int, int], tuple[int, int]]]]]:
+    def calculate_lines(self, board:Board, max_depth:int, n:int=1) -> list[tuple[float, list[Move]]]:
         scored_moves = []
         alpha, beta = -self.INF, self.INF
 
         for move in board.legal_moves():
-            board.make_move(*move)
+            board.make_move(move)
             score = -self._minimax(board, max_depth - 1, -beta, -alpha)
             board.undo_move()
             scored_moves.append((score, [move]))
@@ -37,7 +38,7 @@ class MinimaxAgent(Agent):
 
         max_eval = -self.INF
         for move in board.legal_moves():
-            board.make_move(*move)
+            board.make_move(move)
             score = -self._minimax(board, depth - 1, -beta, -alpha)
             board.undo_move()
 

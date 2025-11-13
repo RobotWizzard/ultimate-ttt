@@ -1,54 +1,45 @@
-from typing import List, Optional, Tuple
-from game.cell import Cell, other
-
+from game.cell import Cell
 
 class SmallBoard:
-    # 0 1 2
-    # 3 4 5
-    # 6 7 8
-    # position = (row, col), (0,0) is top-left
-    WIN_COMBINATIONS = [(0, 1, 2), (3, 4, 5), (6, 7, 8),
-                        (0, 3, 6), (1, 4, 7), (2, 5, 8),
-                        (0, 4, 8), (2, 4, 6)]
+    WIN_MASKS = [
+        0b111_000_000, 0b000_111_000, 0b000_000_111,
+        0b100_100_100, 0b010_010_010, 0b001_001_001,
+        0b100_010_001, 0b001_010_100,
+    ]
 
     def __init__(self):
-        self.cells: List[Cell] = [Cell.EMPTY] * 9
-        self.winner: Optional[Cell] = None
-        self.is_full: bool = False
+        self.x_bits = 0
+        self.o_bits = 0
+        self.winner: Cell | None = None
+        self.is_full = False
     
-    @staticmethod
-    def index_to_coords(index: int) -> Tuple[int, int]:
-        return (index // 3, index % 3)
-    
-    @staticmethod
-    def coords_to_index(row: int, col: int) -> int:
-        return row * 3 + col
-    
-    def _make_move(self, position: int, player: Cell):
-        if self.cells[position] != Cell.EMPTY:
-            raise ValueError("Cell is already occupied")
-        self.cells[position] = player
+    def make_move(self, pos: int, player: Cell):
+        mask = 1 << pos
+        if (self.x_bits | self.o_bits) & mask:
+            raise ValueError("Cell occupied")
+        if player == Cell.X:
+            self.x_bits |= mask
+        else:
+            self.o_bits |= mask
         self._update_status()
-    
-    def make_move(self, position: Tuple[int, int], player: Cell):
-        self._make_move(self.coords_to_index(position[0], position[1]), player)
     
     def undo_move(self, pos: int):
-        self.cells[pos] = Cell.EMPTY
-        self.winner = None
-        self.is_full = False
+        mask = 1 << pos
+        self.x_bits &= ~mask
+        self.o_bits &= ~mask
         self._update_status()
     
-    def legal_moves(self) -> List[Tuple[int, int]]:
-        if self.winner is not None or self.is_full:
-            return []
-        return [self.index_to_coords(i) for i in range(9) if self.cells[i] == Cell.EMPTY]
+    def legal_moves_mask(self) -> int:
+        return ~(self.x_bits | self.o_bits) & 0b111_111_111
     
     def _update_status(self):
-        for combo in self.WIN_COMBINATIONS:
-            if (self.cells[combo[0]] != Cell.EMPTY and
-                self.cells[combo[0]] == self.cells[combo[1]] == self.cells[combo[2]]):
-                self.winner = self.cells[combo[0]]
-                break
-        if all(cell != Cell.EMPTY for cell in self.cells):
-            self.is_full = True
+        for mask in self.WIN_MASKS:
+            if self.x_bits & mask == mask:
+                self.winner = Cell.X
+                return
+            elif self.o_bits & mask == mask:
+                self.winner = Cell.O
+                return
+        filled_mask = self.x_bits | self.o_bits
+        self.is_full = filled_mask == 0b111_111_111
+        self.winner = None if not self.is_full else self.winner

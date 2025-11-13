@@ -6,9 +6,9 @@ from ai.random_agent import RandomAgent
 class DummyBoard:
     def __init__(self):
         self._moves = [
-            ((0, 0), (1, 1)),
-            ((0, 2), (2, 2)),
-            ((1, 1), (0, 0)),
+            0b0000_0101,
+            0b0010_1001,
+            0b0101_0000,
         ]
         self.called = False
 

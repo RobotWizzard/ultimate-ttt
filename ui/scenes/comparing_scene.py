@@ -11,7 +11,7 @@ from game.cell import Cell
 
 class ComparingScene(Scene):
     def __init__(self, screen, manager, agent1_name:str, agent2_name:str,
-                 agent1:Agent, agent2:Agent, num_games:int=1000, num_threads:int=4):
+                 agent1:Agent, agent2:Agent, num_games:int=1000, num_threads:int=8):
         self.screen = screen
         self.manager = manager
         self.num_games = num_games
@@ -60,7 +60,7 @@ class ComparingScene(Scene):
         while not board.is_terminal():
             agent = self.agent1 if board.to_move == Cell.X else self.agent2
             move = agent.choose_move(board)
-            board.make_move(*move)
+            board.make_move(move)
         time.sleep(0.1)
         return board.winner
     

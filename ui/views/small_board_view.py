@@ -4,6 +4,7 @@ from game.board import Board
 from game.cell import Cell
 from ui.components import Button
 from ui.config import HIGHLIGHT_COLOR, X_COLOR, O_COLOR, DEFAULT_FONT
+from utils.utils import index_to_coords, coords_to_index, encode_move
 
 class SmallBoardView:
     def __init__(self, board:SmallBoard, pos:tuple[int, int], size:int,
@@ -20,29 +21,32 @@ class SmallBoardView:
 
         # initialize buttons
         for idx in range(9):
-            r, c = SmallBoard.index_to_coords(idx)
+            r, c = index_to_coords(idx)
             rect = self.get_cell_rect(r, c)
             self.buttons[idx] = Button(rect, "", DEFAULT_FONT, bg_color=(255, 255, 255), hover_color=(200, 200, 200),
-                                       on_click=lambda r=r, c=c:self.button_on_click(r, c))
+                                       on_click=lambda idx=idx:self.button_on_click(idx))
     
-    def button_on_click(self, r, c):
-        idx = SmallBoard.coords_to_index(r, c)
+    def button_on_click(self, idx):
         self.buttons[idx] = None
-        if self.board.cells[idx] == Cell.EMPTY:
-            self.global_board.make_move(self.grid_pos, (r, c))
+        legal_moves_mask = self.board.legal_moves_mask()
+        if legal_moves_mask & (1 << idx) != 0:
+            self.global_board.make_move(encode_move(coords_to_index(*self.grid_pos), idx))
 
     def draw(self, screen):
         # draw grid background
         pygame.draw.rect(screen, (255, 255, 255), self.rect)
 
         # draw cells
-        for idx, cell in enumerate(self.board.cells):
-            r, c = SmallBoard.index_to_coords(idx)
-            if cell == Cell.EMPTY:
-                if self.is_active:
-                    self.buttons[idx].draw(screen)
+        for i in range(9):
+            r, c = index_to_coords(i)
+            mask = 1 << i
+            if self.board.x_bits & mask:
+                self.draw_mark(screen, r, c, Cell.X)
+            elif self.board.o_bits & mask:
+                self.draw_mark(screen, r, c, Cell.O)
             else:
-                self.draw_mark(screen, r, c, cell)
+                if self.is_active and self.buttons[i] is not None:
+                    self.buttons[i].draw(screen)
 
         # draw grid lines
         for i in range(1, 3):

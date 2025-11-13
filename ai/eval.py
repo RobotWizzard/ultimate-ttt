@@ -1,7 +1,7 @@
 from game.board import Board
 from game.cell import Cell
 
-def simple_eval(board:Board) -> float:
+def simple_eval(board: Board) -> float:
     # --- Terminal states ---
     if board.is_terminal():
         if board.winner == Cell.X:
@@ -13,59 +13,63 @@ def simple_eval(board:Board) -> float:
 
     score = 0
 
-    # --- Weights for different features ---
+    # --- Weights ---
     SMALL_WIN = 1000
     CENTER_BOARD_BONUS = 200
     CORNER_BOARD_BONUS = 100
-    LINE2_BONUS = 20   # partial progress in small boards
+    LINE2_BONUS = 20
     CENTER_CELL_BONUS = 5
+    SINGLE_CELL_BONUS = 1
 
-    # --- Macroboard evaluation (small board wins) ---
-    for i in range(9):
-        owner = board.global_board[i]
+    WIN_MASKS = [
+        0b111_000_000, 0b000_111_000, 0b000_000_111,
+        0b100_100_100, 0b010_010_010, 0b001_001_001,
+        0b100_010_001, 0b001_010_100,
+    ]
 
-        # board position (0–8)
+    # --- Evaluate macroboard ---
+    for i, sb in enumerate(board.small_boards):
+        # macroboard position bonuses
         is_center = i == 4
         is_corner = i in (0, 2, 6, 8)
 
-        # Full small board won
-        if owner == Cell.X:
+        if sb.winner == Cell.X:
             score += SMALL_WIN
             if is_center:
                 score += CENTER_BOARD_BONUS
             elif is_corner:
                 score += CORNER_BOARD_BONUS
-        elif owner == Cell.O:
+        elif sb.winner == Cell.O:
             score -= SMALL_WIN
             if is_center:
                 score -= CENTER_BOARD_BONUS
             elif is_corner:
                 score -= CORNER_BOARD_BONUS
         else:
-            # --- Evaluate unfinished small boards ---
-            sb = board.boards[i]
-            cells = sb.cells
+            # evaluate unfinished small board
+            x = sb.x_bits
+            o = sb.o_bits
 
-            # Center cell slightly valuable
-            if cells[4] == Cell.X:
+            # center cell bonus
+            if x & (1 << 4):
                 score += CENTER_CELL_BONUS
-            elif cells[4] == Cell.O:
+            elif o & (1 << 4):
                 score -= CENTER_CELL_BONUS
 
-            # Look at all winning lines within this small board
-            for a, b, c in Board.WIN_COMBINATIONS:
-                line = [cells[a], cells[b], cells[c]]
-                if Cell.X in line and Cell.O in line:
+            # partial line evaluation
+            for mask in WIN_MASKS:
+                x_count = bin(mask & x).count("1")
+                o_count = bin(mask & o).count("1")
+                if x_count > 0 and o_count > 0:
                     continue  # blocked
-                x_count = line.count(Cell.X)
-                o_count = line.count(Cell.O)
                 if x_count == 2 and o_count == 0:
                     score += LINE2_BONUS
                 elif o_count == 2 and x_count == 0:
                     score -= LINE2_BONUS
                 elif x_count == 1 and o_count == 0:
-                    score += 5
+                    score += SINGLE_CELL_BONUS
                 elif o_count == 1 and x_count == 0:
-                    score -= 5
+                    score -= SINGLE_CELL_BONUS
 
     return score / 100
+
