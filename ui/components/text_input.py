@@ -53,9 +53,9 @@ class TextInput:
             pygame.draw.rect(surface, self.border_color, self.rect, width=2)
 
         # Render text
-        margin = 10
+        margin = self.rect.width // 10
         text_surf = self.font.render(self.text, True, self.text_color)
-        surface.blit(text_surf, (self.rect.x + margin, self.rect.y + (self.rect.height - text_surf.get_height()) // 2))
+        surface.blit(text_surf, (self.rect.x + margin, self.rect.y + self.rect.height - text_surf.get_height()))
 
         # Cursor
         if self.active and self.cursor_visible:

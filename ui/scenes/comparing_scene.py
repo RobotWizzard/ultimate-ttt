@@ -4,7 +4,7 @@ import time
 import pygame
 from .scene import Scene
 from ai.agent import Agent
-from ui.config import DEFAULT_FONT
+from ui.config import DEFAULT_FONT, SMALL_FONT
 from ui.components import WinLossBar
 from game.board import Board
 from game.cell import Cell
@@ -24,13 +24,16 @@ class ComparingScene(Scene):
         self.results = {"win": 0, "loss": 0, "draw": 0}
         self.games_played = 0
         
-        self.title_surf = pygame.font.SysFont("Berlin Sans FB", 36).render("Comparing...", True, (0, 0, 0))
-        self.title_rect = self.title_surf.get_rect(left=50, top=50)
-        self.agent_names_surf = DEFAULT_FONT.render(f"{agent1_name} vs {agent2_name}", True, (0, 0, 0))
-        self.agent_names_rect = self.agent_names_surf.get_rect(left=50, top=self.title_rect.bottom+50)
-        self.win_loss_bar = WinLossBar(50, self.agent_names_rect.bottom+20, 400, 50, pygame.font.SysFont("Calibri", 16))
+        self.win_loss_bar = WinLossBar(200, 250, 400, 50, SMALL_FONT)
+        self.agent1_name_surf = DEFAULT_FONT.render(f"{agent1_name} (X)", True, (0, 0, 0))
+        self.agent1_name_rect = self.agent1_name_surf.get_rect(right=self.win_loss_bar.rect.left-50,
+                                                               centery=self.win_loss_bar.rect.centery)
+        self.agent2_name_surf = DEFAULT_FONT.render(f"{agent2_name} (O)", True, (0, 0, 0))
+        self.agent2_name_rect = self.agent2_name_surf.get_rect(left=self.win_loss_bar.rect.right+50,
+                                                               centery=self.win_loss_bar.rect.centery)
         self.games_played_label_surf = DEFAULT_FONT.render(f"Games played: {self.games_played} / {self.num_games}", True, (0, 0, 0))
-        self.games_played_label_rect = self.games_played_label_surf.get_rect(left=50, top=self.win_loss_bar.rect.bottom+20)
+        self.games_played_label_rect = self.games_played_label_surf.get_rect(centerx=self.win_loss_bar.rect.centerx,
+                                                                             top=self.win_loss_bar.rect.bottom+20)
 
         self.thread = threading.Thread(target=self.run_simulations, daemon=True)
         self.thread.start()
@@ -72,7 +75,7 @@ class ComparingScene(Scene):
     
     def draw(self):
         self.screen.fill((255, 255, 255))
-        self.screen.blit(self.title_surf, self.title_rect)
-        self.screen.blit(self.agent_names_surf, self.agent_names_rect)
+        self.screen.blit(self.agent1_name_surf, self.agent1_name_rect)
+        self.screen.blit(self.agent2_name_surf, self.agent2_name_rect)
         self.win_loss_bar.draw(self.screen)
         self.screen.blit(self.games_played_label_surf, self.games_played_label_rect)

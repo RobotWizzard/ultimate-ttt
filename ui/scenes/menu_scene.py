@@ -1,6 +1,7 @@
 import pygame
 from .scene import Scene
 from ui.components import Button
+from ui.config import TITLE_FONT, SECONDARY_TITLE_FONT
 
 class MenuScene(Scene):
     def __init__(self, screen, manager):
@@ -10,7 +11,7 @@ class MenuScene(Scene):
         self.start_button = Button(
             rect=(250, 250, 300, 60),
             text="Start Game",
-            font=pygame.font.SysFont("Berlin Sans FB", 36),
+            font=SECONDARY_TITLE_FONT,
             bg_color=(220, 220, 220),
             text_color=(0, 0, 0),
             hover_color=(200, 200, 200),
@@ -20,7 +21,7 @@ class MenuScene(Scene):
         self.analyse_game_button = Button(
             rect=(250, 320, 300, 60),
             text="Analyse Game",
-            font=pygame.font.SysFont("Berlin Sans FB", 36),
+            font=SECONDARY_TITLE_FONT,
             bg_color=(220, 220, 220),
             text_color=(0, 0, 0),
             hover_color=(200, 200, 200),
@@ -30,7 +31,7 @@ class MenuScene(Scene):
         self.compare_agents_button = Button(
             rect=(250, 390, 300, 60),
             text="Compare Agents",
-            font=pygame.font.SysFont("Berlin Sans FB", 36),
+            font=SECONDARY_TITLE_FONT,
             bg_color=(220, 220, 220),
             text_color=(0, 0, 0),
             hover_color=(200, 200, 200),
@@ -59,7 +60,7 @@ class MenuScene(Scene):
 
     def draw(self):
         self.screen.fill((250, 250, 250))
-        title = pygame.font.SysFont("Harlow Solid", 72).render("Ultimate Tic-Tac-Toe", True, (0, 0, 0))
+        title = TITLE_FONT.render("Ultimate Tic-Tac-Toe", True, (0, 0, 0))
         self.screen.blit(title, (80, 100))
         self.start_button.draw(self.screen)
         self.analyse_game_button.draw(self.screen)

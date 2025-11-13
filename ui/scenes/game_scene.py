@@ -20,16 +20,16 @@ class GameScene(Scene):
 
         self.eval_bar = EvalBar(50, 50, 400, 30)
         self.board_view = BoardView(self.board, pos=(50, 150), size=400)       
-        self.show_eval_checkbox = CheckboxWithLabel(500, 150, 32, "Show Evaluation", DEFAULT_FONT, checked=self.show_eval,
+        self.show_eval_checkbox = CheckboxWithLabel(500, 150, 32, "Show Evaluation (P1)", DEFAULT_FONT, checked=self.show_eval,
                                                     on_toggle=self.set_show_eval)
         
         self.p1_surf = DEFAULT_FONT.render("P1 (X):", True, (0, 0, 0))
-        self.p1_rect = self.p1_surf.get_rect(left=500, centery=200+self.p1_surf.height//2)
+        self.p1_rect = self.p1_surf.get_rect(left=500, centery=220)
         self.p1_dropdown = Dropdown((580, 200, 200, 40), ["none", "random", "minimax", "mcts"], DEFAULT_FONT,
                                     on_select=self.change_agent1)
         
         self.p2_surf = DEFAULT_FONT.render("P2 (O):", True, (0, 0, 0))
-        self.p2_rect = self.p2_surf.get_rect(left=500, centery=250+self.p2_surf.height//2)
+        self.p2_rect = self.p2_surf.get_rect(left=500, centery=270)
         self.p2_dropdown = Dropdown((580, 250, 200, 40), ["none", "random", "minimax", "mcts"], DEFAULT_FONT,
                                     on_select=self.change_agent2)
         

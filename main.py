@@ -2,10 +2,11 @@ import pygame
 
 def main():
     pygame.init()
+    from ui.config import SCREEN_WIDTH, SCREEN_HEIGHT, TITLE
     from ui.scenes import SceneManager, MenuScene
     
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Ultimate Tic-Tac-Toe")
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption(TITLE)
     pygame.display.set_icon(pygame.image.load("ui/assets/icon.png").convert_alpha())
     clock = pygame.time.Clock()
 
