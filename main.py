@@ -1,6 +1,5 @@
-import pygame
-
 def main():
+    import pygame
     pygame.init()
     from ui.config import SCREEN_WIDTH, SCREEN_HEIGHT, TITLE
     from ui.scenes import SceneManager, MenuScene

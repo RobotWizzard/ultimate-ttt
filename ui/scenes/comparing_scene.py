@@ -1,6 +1,4 @@
-import concurrent.futures
-import threading
-import time
+from multiprocessing import Process, Queue
 import pygame
 from .scene import Scene
 from ai.agent import Agent
@@ -9,18 +7,44 @@ from ui.components import WinLossBar
 from game.board import Board
 from game.cell import Cell
 
+
+def simulation_worker(agent1_cls, agent1_args, agent1_kwargs,
+                      agent2_cls, agent2_args, agent2_kwargs,
+                      num_games: int, result_queue: Queue):
+
+    agent1 = agent_factory(agent1_cls, agent1_args, agent1_kwargs)
+    agent2 = agent_factory(agent2_cls, agent2_args, agent2_kwargs)
+
+    for _ in range(num_games):
+        board = Board()
+        while not board.is_terminal():
+            agent = agent1 if board.to_move == Cell.X else agent2
+            move = agent.choose_move(board)
+            board.make_move(move)
+        result_queue.put(board.winner)
+
+def agent_factory(agent_cls, args, kwargs):
+    return agent_cls(*args, **kwargs)
+
 class ComparingScene(Scene):
-    def __init__(self, screen, manager, agent1_name:str, agent2_name:str,
-                 agent1:Agent, agent2:Agent, num_games:int=1000, num_threads:int=8):
+    def __init__(self, screen, manager,
+                 agent1_name:str, agent2_name:str,
+                 agent1:Agent, agent2:Agent,
+                 num_games:int=1000, num_processes:int=8):
         self.screen = screen
         self.manager = manager
         self.num_games = num_games
-        self.agent1 = agent1
-        self.agent2 = agent2
-        self.num_threads = num_threads
+        self.num_processes = num_processes
+
+        self.agent1_cls = agent1.__class__
+        self.agent1_args = getattr(agent1, "_args", ())
+        self.agent1_kwargs = getattr(agent1, "_kwargs", {})
+
+        self.agent2_cls = agent2.__class__
+        self.agent2_args = getattr(agent2, "_args", ())
+        self.agent2_kwargs = getattr(agent2, "_kwargs", {})
 
         self.running = True
-        self.lock = threading.Lock()
         self.results = {"win": 0, "loss": 0, "draw": 0}
         self.games_played = 0
         
@@ -35,43 +59,62 @@ class ComparingScene(Scene):
         self.games_played_label_rect = self.games_played_label_surf.get_rect(centerx=self.win_loss_bar.rect.centerx,
                                                                              top=self.win_loss_bar.rect.bottom+20)
 
-        self.thread = threading.Thread(target=self.run_simulations, daemon=True)
-        self.thread.start()
+        self.result_queue = Queue()
+        self.processes: list[Process] = []
+        self.start_processes()
     
-    def run_simulations(self):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_threads) as executor:
-            futures = [executor.submit(self.simulate_game) for _ in range(self.num_games)]
+    def start_processes(self):
+        """Split work evenly among worker processes."""
+        games_per_process = self.num_games // self.num_processes
+        remainder = self.num_games % self.num_processes
 
-            for future in concurrent.futures.as_completed(futures):
-                if not self.running:
-                    break
-                winner = future.result()
-                with self.lock:
-                    if winner == Cell.X:
-                        self.results['win'] += 1
-                    elif winner == Cell.O:
-                        self.results['loss'] += 1
-                    else:
-                        self.results["draw"] += 1
-                    self.games_played += 1
+        for i in range(self.num_processes):
+            count = games_per_process + (1 if i < remainder else 0)
+            if count == 0:
+                continue
 
-    def simulate_game(self):
-        board = Board()
-        while not board.is_terminal():
-            agent = self.agent1 if board.to_move == Cell.X else self.agent2
-            move = agent.choose_move(board)
-            board.make_move(move)
-        time.sleep(0.1)
-        return board.winner
+            p = Process(
+                target=simulation_worker,
+                args=(
+                    self.agent1_cls, self.agent1_args, self.agent1_kwargs,
+                    self.agent2_cls, self.agent2_args, self.agent2_kwargs,
+                    count, self.result_queue
+                ),
+                daemon=True
+            )
+            p.start()
+            self.processes.append(p)
+
+    def stop_processes(self):
+        for p in self.processes:
+            if p.is_alive():
+                p.kill()
+        self.processes.clear()
     
     def handle_event(self, event):
         if event.type == pygame.QUIT:
             self.running = False
+            self.stop_processes()
 
     def update(self):
+        while not self.result_queue.empty():
+            winner = self.result_queue.get()
+
+            if winner == Cell.X:
+                self.results["win"] += 1
+            elif winner == Cell.O:
+                self.results["loss"] += 1
+            else:
+                self.results["draw"] += 1
+
+            self.games_played += 1
+        
         self.win_loss_bar.set_results(self.results['win'], self.results['draw'], self.results['loss'])
         self.win_loss_bar.update()
         self.games_played_label_surf = DEFAULT_FONT.render(f"Games played: {self.games_played} / {self.num_games}", True, (0, 0, 0))
+
+        if self.games_played >= self.num_games:
+            self.stop_processes()
     
     def draw(self):
         self.screen.fill((255, 255, 255))

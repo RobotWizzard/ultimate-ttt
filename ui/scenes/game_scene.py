@@ -99,11 +99,15 @@ class GameScene(Scene):
         analysis = self.ai_manager.get_analysis()
         if analysis:
             score1, line1 = analysis[0]
-            score2, line2 = analysis[1]
             line1 = list(map(lambda x: str(decode_move(x)), line1))
-            line2 = list(map(lambda x: str(decode_move(x)), line2))
+            self.eval_bar.set_line1((score1, line1))
             self.eval_bar.set_value(score1)
-            self.eval_bar.set_lines((score1, line1), (score2, line2))
+            if len(analysis) >= 2:
+                score2, line2 = analysis[1]
+                line2 = list(map(lambda x: str(decode_move(x)), line2))
+                self.eval_bar.set_line2((score2, line2))
+            else:
+                self.eval_bar.set_line2((0.0, []))
 
         self.board_view.update()
         self.new_game_button.update()

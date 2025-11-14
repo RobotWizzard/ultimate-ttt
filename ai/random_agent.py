@@ -5,6 +5,10 @@ from game.board import Board
 from utils.utils import Move
 
 class RandomAgent(Agent):
+    def __init__(self):
+        self._args = tuple()
+        self._kwargs = {}
+
     def choose_move(self, board: 'Board') -> Move:
         legal_moves = board.legal_moves()
         return random.choice(legal_moves)

@@ -14,6 +14,10 @@ def _analysis_worker(board:Board, agent:Agent, output_list:list[tuple[float, lis
     while not stop_event.is_set():
         try:
             top_lines = agent.calculate_lines(board, depth, n=n_lines)  # top_lines: list of tuples (score, [Move, Move, ...])
+            if not top_lines:
+                score = agent.eval_fn(board)
+                output_list[:] = [(score, [])] * n_lines
+                break
             output_list[:] = top_lines
             depth += 1
         except Exception:
