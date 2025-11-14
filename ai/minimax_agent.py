@@ -1,5 +1,5 @@
 import time
-from heapq import nlargest
+from heapq import nlargest, nsmallest
 from typing import List, Tuple, Optional
 
 from .agent import Agent
@@ -121,8 +121,10 @@ class MinimaxAgent(Agent):
             # update alpha for root-based move ordering / pruning
             alpha = max(alpha, child_score)
 
-        # Return top-n lines (highest score first)
-        top_lines = nlargest(n, scored_lines, key=lambda x: x[0])
+        if board.to_move == Cell.X:
+            top_lines = nlargest(n, scored_lines, key=lambda x: x[0])
+        else:
+            top_lines = nsmallest(n, scored_lines, key=lambda x: x[0])
         return top_lines
 
     # ------------------------------------------

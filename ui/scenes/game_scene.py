@@ -2,12 +2,12 @@ import pygame
 from .scene import Scene
 from ui.components import CheckboxWithLabel, Dropdown, Button, EvalBar
 from ui.views import BoardView
-from ui.config import DEFAULT_FONT
+from ui.config import DEFAULT_FONT, SMALL_FONT
 from game.board import Board
 from game.cell import Cell
 from ai import AiManager, RandomAgent, MinimaxAgent
 from ai.eval import simple_eval
-from utils.utils import decode_move
+from utils.utils import decode_move, save_game
 
 class GameScene(Scene):
     def __init__(self, screen, manager):
@@ -37,11 +37,24 @@ class GameScene(Scene):
         self.p2_dropdown = Dropdown((580, 250, 200, 40), ["none", "random", "minimax", "mcts"], DEFAULT_FONT,
                                     on_select=self.change_agent2)
         
-        self.new_game_button = Button((500, 505, 150, 40), "New Game", DEFAULT_FONT,
+        self.new_game_button = Button((500, 445, 150, 40), "New Game", DEFAULT_FONT,
                                       on_click=self.new_game)
+        self.save_game_button = Button((500, 505, 150, 40), "Save Game", DEFAULT_FONT,
+                                      on_click=self.check_and_save_game)
         self.back_button = Button((670, 505, 100, 40), "Back", DEFAULT_FONT,
-                                  on_click=lambda: self.back(screen, manager)) 
+                                  on_click=lambda: self.back(screen, manager))
+        
+        self.save_game_warning = False
+        self.save_game_surf = SMALL_FONT.render("*Only complete games can be saved.", True, (200, 0, 0))
+        self.save_game_rect = self.save_game_surf.get_rect(left=self.save_game_button.rect.x,
+                                                           top=self.save_game_button.rect.bottom+5)
     
+    def check_and_save_game(self):
+        if self.board.is_terminal():
+            save_game(self.board)
+        else:
+            self.save_game_warning = True
+
     def back(self, screen, manager):
         self.ai_manager.stop()
         from .menu_scene import MenuScene
@@ -62,7 +75,7 @@ class GameScene(Scene):
         elif agent_type == "minimax":
             self.agent1 = MinimaxAgent(simple_eval)
         # elif agent_type == "mcts":
-        #     self.agent1 = MCTSAgent()
+        #     self.agent1 = MctsAgent()
 
     def change_agent2(self, agent_type:str):
         if agent_type == "none":
@@ -72,13 +85,14 @@ class GameScene(Scene):
         elif agent_type == "minimax":
             self.agent2 = MinimaxAgent(simple_eval)
         # elif agent_type == "mcts":
-        #     self.agent2 = MCTSAgent()
+        #     self.agent2 = MctsAgent()
 
     def handle_event(self, event):
         self.show_eval_checkbox.handle_event(event)
         self.p1_dropdown.handle_event(event)
         self.p2_dropdown.handle_event(event)
         self.board_view.handle_event(event)
+        self.save_game_button.handle_event(event)
         self.new_game_button.handle_event(event)
         self.back_button.handle_event(event)
 
@@ -101,7 +115,7 @@ class GameScene(Scene):
             score1, line1 = analysis[0]
             line1 = list(map(lambda x: str(decode_move(x)), line1))
             self.eval_bar.set_line1((score1, line1))
-            self.eval_bar.set_value(score1)
+            self.eval_bar.set_value(simple_eval(self.board))
             if len(analysis) >= 2:
                 score2, line2 = analysis[1]
                 line2 = list(map(lambda x: str(decode_move(x)), line2))
@@ -110,6 +124,7 @@ class GameScene(Scene):
                 self.eval_bar.set_line2((0.0, []))
 
         self.board_view.update()
+        self.save_game_button.update()
         self.new_game_button.update()
         self.back_button.update()
 
@@ -117,8 +132,11 @@ class GameScene(Scene):
         self.screen.fill((255, 255, 255))
         if self.show_eval:
             self.eval_bar.draw(self.screen)
+        if self.save_game_warning:
+            self.screen.blit(self.save_game_surf, self.save_game_rect)
         self.board_view.draw(self.screen)
         self.show_eval_checkbox.draw(self.screen)
+        self.save_game_button.draw(self.screen)
         self.new_game_button.draw(self.screen)
         self.back_button.draw(self.screen)
         self.screen.blit(self.p1_surf, self.p1_rect)

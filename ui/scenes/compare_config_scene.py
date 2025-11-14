@@ -1,5 +1,5 @@
 from .scene import Scene
-from ui.components import TextInput, Dropdown, Button
+from ui.components import TextInput, Dropdown, Button, CheckboxWithLabel
 from ui.config import SCREEN_HEIGHT, SCREEN_WIDTH, DEFAULT_FONT, SMALL_FONT
 from ai import RandomAgent, MinimaxAgent
 from ai.eval import simple_eval
@@ -36,8 +36,15 @@ class CompareConfigScene(Scene):
         self.warning_rect = self.warning_surf.get_rect(left=100, top=self.text_input.rect.bottom+10)
         self.show_warning = False
 
+        self.save_games = False
+        self.save_games_checkbox = CheckboxWithLabel(100, self.warning_rect.bottom + 20, 40, "Save games", DEFAULT_FONT,
+                                                     on_toggle=self.set_save_games)
+
         self.start_button = Button((SCREEN_WIDTH-150, SCREEN_HEIGHT-90, 100, 40), "Start", on_click=self.start_compare)
         self.back_button = Button((50, SCREEN_HEIGHT-90, 100, 40), "Back", on_click=self.back)
+
+    def set_save_games(self, val:bool):
+        self.save_games = val
     
     def check_input(self, input):
         try:
@@ -73,7 +80,7 @@ class CompareConfigScene(Scene):
             return
         from .comparing_scene import ComparingScene
         comparing_scene = ComparingScene(self.screen, self.manager, self.agent1_dropdown.get_text(), self.agent2_dropdown.get_text(),
-                                         self.agent1, self.agent2, num_games)
+                                         self.agent1, self.agent2, num_games, save_games=self.save_games)
         self.manager.set_scene(comparing_scene)
     
     def back(self):
@@ -86,6 +93,7 @@ class CompareConfigScene(Scene):
         self.agent2_dropdown.handle_event(event)
         self.start_button.handle_event(event)
         self.back_button.handle_event(event)
+        self.save_games_checkbox.handle_event(event)
     
     def update(self):
         self.text_input.update()
@@ -105,3 +113,4 @@ class CompareConfigScene(Scene):
         self.agent1_dropdown.draw(self.screen)
         self.start_button.draw(self.screen)
         self.back_button.draw(self.screen)
+        self.save_games_checkbox.draw(self.screen)

@@ -1,6 +1,5 @@
 from game.cell import Cell, other
 from game.smallboard import SmallBoard
-from utils.utils import encode_move, decode_move
 
 class Board:
     WIN_MASKS = SmallBoard.WIN_MASKS
@@ -16,7 +15,7 @@ class Board:
         # (move, prev_active)
 
     def make_move(self, move: int):
-        big, small = decode_move(move)
+        big, small = move >> 4, move & 0b1111
         sb = self.small_boards[big]
         sb.make_move(small, self.to_move)
         if sb.winner == Cell.X:
@@ -38,7 +37,7 @@ class Board:
 
     def undo_move(self):
         move, prev_active = self.move_history.pop()
-        big, small = decode_move(move)
+        big, small = move >> 4, move & 0b1111
         sb = self.small_boards[big]
         sb.undo_move(small)
         self.active_board = prev_active
@@ -60,7 +59,7 @@ class Board:
             mask = sb.legal_moves_mask()
             while mask:
                 pos = (mask & -mask).bit_length() - 1  # index of lowest set bit
-                moves.append(encode_move(big, pos))
+                moves.append(big << 4 | pos)
                 mask &= mask - 1  # clear lowest bit
         return moves
 
@@ -98,6 +97,7 @@ class Board:
             new.small_boards[i].is_full = self.small_boards[i].is_full
         new.active_board = self.active_board
         new.to_move = self.to_move
+        new.move_history = self.move_history[:]
         return new
 
     # def __str__(self) -> str:

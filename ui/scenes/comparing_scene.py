@@ -6,11 +6,12 @@ from ui.config import DEFAULT_FONT, SMALL_FONT
 from ui.components import WinLossBar
 from game.board import Board
 from game.cell import Cell
+from utils.utils import save_game
 
 
 def simulation_worker(agent1_cls, agent1_args, agent1_kwargs,
                       agent2_cls, agent2_args, agent2_kwargs,
-                      num_games: int, result_queue: Queue):
+                      num_games: int, result_queue: Queue, save_games: bool):
 
     agent1 = agent_factory(agent1_cls, agent1_args, agent1_kwargs)
     agent2 = agent_factory(agent2_cls, agent2_args, agent2_kwargs)
@@ -21,6 +22,8 @@ def simulation_worker(agent1_cls, agent1_args, agent1_kwargs,
             agent = agent1 if board.to_move == Cell.X else agent2
             move = agent.choose_move(board)
             board.make_move(move)
+        if save_games:
+            save_game(board)
         result_queue.put(board.winner)
 
 def agent_factory(agent_cls, args, kwargs):
@@ -30,11 +33,12 @@ class ComparingScene(Scene):
     def __init__(self, screen, manager,
                  agent1_name:str, agent2_name:str,
                  agent1:Agent, agent2:Agent,
-                 num_games:int=1000, num_processes:int=8):
+                 num_games:int=1000, num_processes:int=8, save_games:bool=False):
         self.screen = screen
         self.manager = manager
         self.num_games = num_games
         self.num_processes = num_processes
+        self.save_games = save_games
 
         self.agent1_cls = agent1.__class__
         self.agent1_args = getattr(agent1, "_args", ())
@@ -78,7 +82,7 @@ class ComparingScene(Scene):
                 args=(
                     self.agent1_cls, self.agent1_args, self.agent1_kwargs,
                     self.agent2_cls, self.agent2_args, self.agent2_kwargs,
-                    count, self.result_queue
+                    count, self.result_queue, self.save_games
                 ),
                 daemon=True
             )
