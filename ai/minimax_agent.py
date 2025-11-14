@@ -31,36 +31,49 @@ class MinimaxAgent(Agent):
         return best_move
     
 
-    def calculate_lines(self, board:Board, max_depth:int, n:int=1) -> list[tuple[float, list[Move]]]:
-        scored_moves = []
+    def calculate_lines(self, board: Board, max_depth: int, n: int = 1):
+        """
+        Returns top N lines from the current board.
+        Each line is (score, [Move, Move, ...])
+        """
+        scored_lines = []
         alpha, beta = -self.INF, self.INF
 
         for move in board.legal_moves():
             board.make_move(move)
-            score = -self._minimax(board, max_depth - 1, -beta, -alpha)
+            score, line = self._minimax(board, max_depth - 1, -beta, -alpha, n)
             board.undo_move()
-            scored_moves.append((score, [move]))
+
+            # prepend the current move to the PV
+            scored_lines.append((score, [move] + line))
             alpha = max(alpha, score)
 
-        # Sort and keep top_k
-        top_lines = nlargest(n, scored_moves, key=lambda x: x[0])
+        # keep top n lines
+        top_lines = nlargest(n, scored_lines, key=lambda x: x[0])
+        return top_lines
 
-        return top_lines  # [(score, [move1, move2, ...]), ...]
-    
 
-    def _minimax(self, board:Board, depth:int, alpha:float, beta:float) -> float:
+    def _minimax(self, board: Board, depth: int, alpha: float, beta: float, n: int) -> tuple[float, list[Move]]:
+        if hasattr(self, "stop_event") and self.stop_event.is_set():
+            raise TimeoutError()
+
         if depth == 0 or board.is_terminal():
-            return self.eval_fn(board)
+            return self.eval_fn(board), []
 
-        max_eval = -self.INF
+        scored_lines = []
         for move in board.legal_moves():
+            if getattr(self, "stop_event", None) and self.stop_event.is_set():
+                raise TimeoutError()
             board.make_move(move)
-            score = -self._minimax(board, depth - 1, -beta, -alpha)
+            score, line = self._minimax(board, depth - 1, -beta, -alpha, n)
             board.undo_move()
 
-            max_eval = max(max_eval, score)
+            score = -score
+            scored_lines.append((score, [move] + line))
             alpha = max(alpha, score)
             if alpha >= beta:
                 break  # alpha-beta cutoff
 
-        return max_eval
+        # keep top n lines at this node
+        top_lines = nlargest(n, scored_lines, key=lambda x: x[0])
+        return top_lines[0]  # return best line for parent

@@ -1,14 +1,13 @@
 import pygame
-import time
 from .scene import Scene
 from ui.components import CheckboxWithLabel, Dropdown, Button, EvalBar
 from ui.views import BoardView
 from ui.config import DEFAULT_FONT
 from game.board import Board
-from ai.random_agent import RandomAgent
-from ai.minimax_agent import MinimaxAgent
-from ai.eval import simple_eval
 from game.cell import Cell
+from ai import AiManager, RandomAgent, MinimaxAgent
+from ai.eval import simple_eval
+from utils.utils import decode_move
 
 class GameScene(Scene):
     def __init__(self, screen, manager):
@@ -18,6 +17,10 @@ class GameScene(Scene):
         self.agent2 = None
         self.board = Board()
         self.show_eval = True
+
+        self.to_move = self.board.to_move
+        self.ai_manager = AiManager(self.board, MinimaxAgent(simple_eval, time_limit=0.1))
+        self.ai_manager.start()
 
         self.eval_bar = EvalBar(50, 50, 400, 30)
         self.board_view = BoardView(self.board, pos=(50, 150), size=400)       
@@ -40,6 +43,7 @@ class GameScene(Scene):
                                   on_click=lambda: self.back(screen, manager)) 
     
     def back(self, screen, manager):
+        self.ai_manager.stop()
         from .menu_scene import MenuScene
         manager.set_scene(MenuScene(screen, manager))
 
@@ -79,16 +83,28 @@ class GameScene(Scene):
         self.back_button.handle_event(event)
 
     def update(self):
+        if self.board.to_move != self.to_move:
+            self.to_move = self.board.to_move
+            self.ai_manager.update_board(self.board)
+        
         if not self.board.is_terminal() and self.agent1 is not None and self.board.to_move == Cell.X:
             move = self.agent1.choose_move(self.board.copy())
             if move is not None:
                 self.board.make_move(move)
-                time.sleep(0.1)
         if not self.board.is_terminal() and self.agent2 is not None and self.board.to_move == Cell.O:
             move = self.agent2.choose_move(self.board.copy())
             if move is not None:
                 self.board.make_move(move)
-                time.sleep(0.1)
+
+        analysis = self.ai_manager.get_analysis()
+        if analysis:
+            score1, line1 = analysis[0]
+            score2, line2 = analysis[1]
+            line1 = list(map(lambda x: str(decode_move(x)), line1))
+            line2 = list(map(lambda x: str(decode_move(x)), line2))
+            self.eval_bar.set_value(score1)
+            self.eval_bar.set_lines((score1, line1), (score2, line2))
+
         self.board_view.update()
         self.new_game_button.update()
         self.back_button.update()

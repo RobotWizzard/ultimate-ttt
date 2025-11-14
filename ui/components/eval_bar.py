@@ -26,9 +26,9 @@ class EvalBar:
     def set_line2(self, line:tuple[float, list[str]]):
         self.line2 = line
 
-    def set_lines(self, lines:tuple[tuple[float, list[str]], tuple[float, list[str]]]):
-        self.set_line1(lines[0])
-        self.set_line2(lines[1])
+    def set_lines(self, line1:tuple[float, list[str]], line2:tuple[float, list[str]]):
+        self.set_line1(line1)
+        self.set_line2(line2)
 
     def draw(self, screen):
         # background
@@ -67,9 +67,7 @@ class EvalBar:
 
         # draw engine lines below
         # first line
-        line_moves = ""
-        for s in self.line1[1]:
-            line_moves += " " + s
+        line_moves = " ".join(self.line1[1][:10])
         y_offset = self.rect.bottom + 10
         color = (160, 160, 160)
         line_surface = self.font.render(f"{self.line1[0]} {line_moves}", True, color)
@@ -77,8 +75,6 @@ class EvalBar:
 
         # second line
         y_offset += 20
-        line_moves = ""
-        for s in self.line2[1]:
-            line_moves += " " + s
+        line_moves = " ".join(self.line2[1][:10])
         line_surface = self.font.render(f"{self.line2[0]} {line_moves}", True, color)
         screen.blit(line_surface, (self.rect.left, y_offset))
