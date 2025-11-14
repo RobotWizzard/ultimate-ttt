@@ -1,7 +1,7 @@
 from .scene import Scene
 from ui.components import TextInput, Dropdown, Button, CheckboxWithLabel
 from ui.config import SCREEN_HEIGHT, SCREEN_WIDTH, DEFAULT_FONT, SMALL_FONT
-from ai import RandomAgent, MinimaxAgent
+from ai import RandomAgent, MinimaxAgent, MctsAgent
 from ai.eval import simple_eval
 
 
@@ -58,16 +58,16 @@ class CompareConfigScene(Scene):
             self.agent1 = RandomAgent()
         elif agent_name == "minimax":
             self.agent1 = MinimaxAgent(simple_eval)
-        else:  #TODO: add mcts
-            pass
+        else:
+            self.agent1 = MctsAgent()
     
     def change_agent2(self, agent_name):
         if agent_name == "random":
             self.agent2 = RandomAgent()
         elif agent_name == "minimax":
             self.agent2 = MinimaxAgent(simple_eval)
-        else:  #TODO: add mcts
-            pass
+        else:
+           self.agent2 = MctsAgent()
     
     def start_compare(self):
         try:

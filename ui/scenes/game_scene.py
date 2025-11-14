@@ -5,7 +5,7 @@ from ui.views import BoardView
 from ui.config import DEFAULT_FONT, SMALL_FONT
 from game.board import Board
 from game.cell import Cell
-from ai import AiManager, RandomAgent, MinimaxAgent
+from ai import AiManager, RandomAgent, MinimaxAgent, MctsAgent
 from ai.eval import simple_eval
 from utils.utils import decode_move, save_game
 
@@ -74,8 +74,8 @@ class GameScene(Scene):
             self.agent1 = RandomAgent()
         elif agent_type == "minimax":
             self.agent1 = MinimaxAgent(simple_eval)
-        # elif agent_type == "mcts":
-        #     self.agent1 = MctsAgent()
+        elif agent_type == "mcts":
+            self.agent1 = MctsAgent()
 
     def change_agent2(self, agent_type:str):
         if agent_type == "none":
@@ -84,8 +84,8 @@ class GameScene(Scene):
             self.agent2 = RandomAgent()
         elif agent_type == "minimax":
             self.agent2 = MinimaxAgent(simple_eval)
-        # elif agent_type == "mcts":
-        #     self.agent2 = MctsAgent()
+        elif agent_type == "mcts":
+            self.agent2 = MctsAgent()
 
     def handle_event(self, event):
         self.show_eval_checkbox.handle_event(event)
