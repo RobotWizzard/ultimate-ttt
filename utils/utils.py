@@ -1,3 +1,8 @@
+import torch
+from pathlib import Path
+from game.board import Board
+from game.cell import Cell
+
 # --- Types ---
 
 Move = int
@@ -20,10 +25,61 @@ def encode_move(big:int, small:int) -> int:
     """Encodes moves from a tuple to a single integer."""
     return big << 4 | small
 
-# --- Storage functions ---
+def encode_small_board(sb) -> list[float]:
+    """
+    Encode a single SmallBoard as 16 floats:
+      1.0 if X occupies cell
+     -1.0 if O occupies cell
+      0.0 if empty
+    """
+    vec = []
+    for i in range(16):
+        if sb.x_bits & (1 << i):
+            vec.append(1.0)
+        elif sb.o_bits & (1 << i):
+            vec.append(-1.0)
+        else:
+            vec.append(0.0)
+    return vec
 
-from pathlib import Path
-from game.board import Board
+
+def encode_board(board:Board) -> torch.Tensor:
+    """
+    Encode board as a 1D float vector suitable for neural network input.
+    
+    Layout:
+    - 9 small boards × 16 cells = 144
+    - global_x bits (9)
+    - global_o bits (9)
+    - active board mask (9)
+    - player to move (1)
+    
+    Total length = 172
+    """
+    features = []
+
+    # --- Small boards ---
+    for sb in board.small_boards:
+        features.extend(encode_small_board(sb))
+
+    # --- Global macroboard ---
+    for i in range(9):
+        features.append(1.0 if board.global_x & (1 << i) else 0.0)
+    for i in range(9):
+        features.append(1.0 if board.global_o & (1 << i) else 0.0)
+
+    # --- Active board (1-hot) ---
+    active = [0.0] * 9
+    if board.active_board is not None:
+        active[board.active_board] = 1.0
+    features.extend(active)
+
+    # --- To-move ---
+    features.append(1.0 if board.to_move == Cell.X else -1.0)
+
+    return torch.tensor(features, dtype=torch.float32)
+
+# --- Storage functions ---
 
 def save_game(board: Board, folder: str = "data/saved_games", filename: str = None):
     """Save a completed game to a txt file."""
