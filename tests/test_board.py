@@ -110,6 +110,28 @@ def test_copy_returns_independent_board(empty_board):
     assert b_copy.small_boards[0].x_bits & (1 << 1) == 0  # copy unaffected
     assert b_copy.to_move == b.to_move  # copy preserves turn
 
+def test_copy_returns_identical_board(empty_board):
+    b = empty_board
+    moves = [encode_move(0, 0), encode_move(0, 1), encode_move(1, 0)]
+    for move in moves:
+        b.make_move(move)
+    b_copy = b.copy()
+
+    # Check all attributes are identical
+    b_copy.global_o == b.global_o
+    b_copy.global_x == b.global_x
+    assert b_copy.to_move == b.to_move
+    assert b_copy.active_board == b.active_board
+    assert b_copy.winner == b.winner
+    assert b_copy.move_history == b.move_history
+    for i in range(9):
+        sb_orig = b.small_boards[i]
+        sb_copy = b_copy.small_boards[i]
+        assert sb_orig.x_bits == sb_copy.x_bits
+        assert sb_orig.o_bits == sb_copy.o_bits
+        assert sb_orig.winner == sb_copy.winner
+        assert sb_orig.is_full == sb_copy.is_full
+
 
 def test_is_terminal_detection(empty_board):
     b = empty_board

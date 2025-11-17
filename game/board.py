@@ -98,6 +98,7 @@ class Board:
         new.active_board = self.active_board
         new.to_move = self.to_move
         new.move_history = self.move_history[:]
+        new.winner = self.winner
         return new
 
     # def __str__(self) -> str:
