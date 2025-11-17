@@ -14,7 +14,7 @@ ScorePV = Tuple[float, List[Move]]
 class MinimaxAgent(Agent):
     INF = 1e9
 
-    def __init__(self, eval_fn: callable, time_limit: float = 0.5):
+    def __init__(self, eval_fn: callable, time_limit: float = 1.0):
         """
         eval_fn(board) -> float
           * should return positive = good for X, negative = good for O
@@ -61,7 +61,7 @@ class MinimaxAgent(Agent):
             if time.time() >= deadline:
                 break
 
-            # attach a small time guard to allow _negamax to exit quickly
+            # attach a small time guard to allow _minimax to exit quickly
             try:
                 # run a single-depth search that returns top-1 root lines
                 lines = self.calculate_lines(board, depth, n=1)
@@ -85,8 +85,8 @@ class MinimaxAgent(Agent):
 
     def calculate_lines(self, board: Board, max_depth: int, n: int = 1) -> List[ScorePV]:
         """
-        Compute top-n PV lines at the root using negamax + alpha-beta.
-        This function explores root moves (with simple ordering) and calls _negamax
+        Compute top-n PV lines at the root using minimax + alpha-beta.
+        This function explores root moves (with simple ordering) and calls _minimax
         which returns a single (score, pv) per child; we negate child scores to parent's perspective.
         """
         if getattr(self, "stop_event", None) and self.stop_event.is_set():

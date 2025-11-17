@@ -78,7 +78,9 @@ class BoardView:
     
     def update(self):
         for i, sbv in enumerate(self.small_board_views):
-            sbv.is_active = (self.board.active_board is None or self.board.active_board == i)
+            sbv.is_active = ((self.board.active_board is None and not self.board.small_boards[i].is_full 
+                              and self.board.small_boards[i].winner is None)
+                             or self.board.active_board == i)
             sbv.update()
         if self.board.is_terminal():
             # if the global board is won, deactivate all small boards
