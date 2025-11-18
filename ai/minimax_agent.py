@@ -1,5 +1,5 @@
 import time
-from heapq import nlargest, nsmallest
+from heapq import nlargest
 from typing import List, Tuple, Optional
 
 from .agent import Agent
@@ -110,6 +110,7 @@ class MinimaxAgent(Agent):
             board.make_move(move)
             try:
                 child_score, child_pv = self._minimax(board, max_depth - 1, -beta, -alpha)
+                child_score = -child_score  # negamax inversion
             except TimeoutError:
                 board.undo_move()
                 raise
@@ -121,10 +122,7 @@ class MinimaxAgent(Agent):
             # update alpha for root-based move ordering / pruning
             alpha = max(alpha, child_score)
 
-        if board.to_move == Cell.X:
-            top_lines = nlargest(n, scored_lines, key=lambda x: x[0])
-        else:
-            top_lines = nsmallest(n, scored_lines, key=lambda x: x[0])
+        top_lines = nlargest(n, scored_lines, key=lambda x: x[0])
         return top_lines
 
     # ------------------------------------------
@@ -146,8 +144,7 @@ class MinimaxAgent(Agent):
             # If it's X to move, eval_for_current = eval_fn(board)
             # If it's O to move, eval_for_current = -eval_fn(board)
             raw = self.eval_fn(board)
-            eval_for_current = raw if board.to_move == Cell.X else -raw
-            return eval_for_current, []
+            return raw if board.to_move == Cell.X else -raw, []
 
         best_score = -self.INF
         best_pv: List[Move] = []
@@ -171,7 +168,7 @@ class MinimaxAgent(Agent):
                 best_score = child_score
                 best_pv = [move] + child_pv
 
-            alpha = max(alpha, child_score)
+            alpha = max(alpha, best_score)
             if alpha >= beta:
                 # cutoff
                 break

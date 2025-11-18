@@ -6,7 +6,7 @@ from ui.config import DEFAULT_FONT, SMALL_FONT
 from game.board import Board
 from game.cell import Cell
 from ai import AiManager, RandomAgent, MinimaxAgent, MctsAgent, MctsValueAgent
-from ai.eval import simple_eval
+from ai.eval import simple_eval, complex_eval
 from utils.utils import decode_move, save_game
 
 class GameScene(Scene):
@@ -19,7 +19,7 @@ class GameScene(Scene):
         self.show_eval = True
 
         self.to_move = self.board.to_move
-        self.ai_manager = AiManager(self.board, MinimaxAgent(simple_eval, time_limit=0.1))
+        self.ai_manager = AiManager(self.board, MinimaxAgent(complex_eval, time_limit=0.1))
         self.ai_manager.start()
 
         self.eval_bar = EvalBar(50, 50, 400, 30)
@@ -30,13 +30,15 @@ class GameScene(Scene):
         self.p1_surf = DEFAULT_FONT.render("P1 (X):", True, (0, 0, 0))
         self.p1_rect = self.p1_surf.get_rect(left=500, centery=220)
         self.p1_dropdown = Dropdown((580, 200, 200, 40), 
-                                    ["none", "random", "minimax", "mcts_random", "mcts_heuristic", "mcts_learning"],
+                                    ["none", "random", "minimax_simple", "minimax_complex",
+                                     "mcts_random", "mcts_heuristic", "mcts_learning"],
                                     DEFAULT_FONT, on_select=self.change_agent1)
         
         self.p2_surf = DEFAULT_FONT.render("P2 (O):", True, (0, 0, 0))
         self.p2_rect = self.p2_surf.get_rect(left=500, centery=270)
         self.p2_dropdown = Dropdown((580, 250, 200, 40), 
-                                    ["none", "random", "minimax", "mcts_random", "mcts_heuristic", "mcts_learning"],
+                                    ["none", "random", "minimax_simple", "minimax_complex",
+                                     "mcts_random", "mcts_heuristic", "mcts_learning"],
                                     DEFAULT_FONT, on_select=self.change_agent2)
         
         self.new_game_button = Button((500, 445, 150, 40), "New Game", DEFAULT_FONT,
@@ -75,8 +77,10 @@ class GameScene(Scene):
             self.agent1 = None
         elif agent_type == "random":
             self.agent1 = RandomAgent()
-        elif agent_type == "minimax":
+        elif agent_type == "minimax_simple":
             self.agent1 = MinimaxAgent(simple_eval)
+        elif agent_type == "minimax_complex":
+            self.agent1 = MinimaxAgent(complex_eval)
         elif agent_type == "mcts_random":
             self.agent1 = MctsAgent(use_heuristic=False)
         elif agent_type == "mcts_heuristic":
@@ -89,8 +93,10 @@ class GameScene(Scene):
             self.agent2 = None
         elif agent_type == "random":
             self.agent2 = RandomAgent()
-        elif agent_type == "minimax":
+        elif agent_type == "minimax_simple":
             self.agent2 = MinimaxAgent(simple_eval)
+        elif agent_type == "minimax_complex":
+            self.agent2 = MinimaxAgent(complex_eval)
         elif agent_type == "mcts_random":
             self.agent2 = MctsAgent(use_heuristic=False)
         elif agent_type == "mcts_heuristic":

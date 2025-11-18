@@ -5,7 +5,7 @@ class EvalBar:
     def __init__(self, x, y, width, height, font=SMALL_FONT):
         self.rect = pygame.Rect(x, y, width, height)
         self.value = 0.0  # engine eval, positive = X better
-        self.max_eval = 1.0  # max range shown
+        self.max_eval = 5.0  # max range shown
         self.line1 = (0.0, [])  # (eval, [moves])
         self.line2 = (0.0, [])
         self.font = font
@@ -19,8 +19,7 @@ class EvalBar:
         self.display_value = 0.0
 
     def set_value(self, value: float):
-        value = round(value, 2)
-        self.value = max(-self.max_eval, min(self.max_eval, value))
+        self.value = round(value, 2)
 
     def set_line1(self, line:tuple[float, list[str]]):
         self.line1 = line
@@ -37,7 +36,7 @@ class EvalBar:
         pygame.draw.rect(screen, self.border_color, self.rect, width=2)
 
         # smooth interpolation
-        self.display_value += (self.value - self.display_value) * 0.2
+        self.display_value += (max(-self.max_eval, min(self.max_eval, self.value)) - self.display_value) * 0.2
 
         # normalize eval: -max → 0, +max → 1
         normalized = (self.display_value + self.max_eval) / (2 * self.max_eval)

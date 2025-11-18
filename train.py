@@ -40,7 +40,7 @@ def worker_self_play(worker_id, model_weights, task_queue, result_queue):
 
 
 def main():
-    agent = MctsValueAgent(time_limit=1.0, persistent_tree=False, c=1.4)
+    agent = MctsValueAgent(time_limit=1.0, c=1.414)
     agent.model.share_memory()  # required for MP
 
     manager = mp.Manager()
@@ -74,7 +74,7 @@ def main():
             games_collected += 1
 
         # Train periodically
-        if games_collected % 20 == 0:
+        if games_collected % 24 == 0:
             agent.train_from_replay()
             print(f"[Trainer] {games_collected} games collected. Updated model. Sending weights to workers...")
 

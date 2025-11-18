@@ -8,8 +8,8 @@ import torch.optim as optim
 from ..agent import Agent
 from .mcts_node import MctsNode
 from game.board import Board
-from game.cell import Cell
-from utils.utils import Move, encode_board, save_game
+from game.cell import Cell, other
+from utils.utils import Move, encode_board
 
 
 # ----------------------------------------
@@ -42,15 +42,18 @@ class MctsValueAgent(Agent):
             model_path: str = "data/models/mcts_value_agent.pt",
             replay_capacity: int = 100_000,
             batch_size: int = 256,
-            persistent_tree: bool = True,
-            c: float = 1.1
+            c: float = 1.414
     ):
+        self._args = ()
+        self._kwargs = {"time_limit": time_limit, "learning_rate": learning_rate,
+                        "model_path": model_path, "replay_capacity": replay_capacity,
+                        "batch_size": batch_size, "c": c}
         self.root: Optional[MctsNode] = None
         self.time_limit = time_limit
-        self.persistent_tree = persistent_tree
         self.c = c
 
         # value network
+        # +ve for current player win, -ve for loss
         self.model = ValueNet()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.loss_fn = nn.MSELoss()
@@ -71,32 +74,10 @@ class MctsValueAgent(Agent):
             print("[MctsValueAgent] No pretrained model found. Creating a new model")
 
     # ----------------------
-    # Root handling
-    # ----------------------
-    def _set_root(self, board: Board):
-        if not self.persistent_tree:
-            self.root = MctsNode(board)
-            return
-        
-        if self.root is None:
-            self.root = MctsNode(board)
-            return
-
-        if board.move_history:
-            last_move = board.move_history[-1]
-            for child in self.root.children:
-                if child.move == last_move:
-                    self.root = child
-                    self.root.parent = None
-                    return
-
-        self.root = MctsNode(board)
-
-    # ----------------------
     # Choose move using MCTS
     # ----------------------
     def choose_move(self, board: Board) -> Move:
-        self._set_root(board)
+        self.root = MctsNode(board)
         root = self.root
         end_time = time.time() + self.time_limit
 
@@ -136,17 +117,22 @@ class MctsValueAgent(Agent):
     # Rollout with value network
     # ----------------------
     def _rollout(self, board: Board) -> float:
+        root_player = self.root.board.to_move
+
         if board.is_terminal():
-            if board.winner == Cell.X: return 1.0
-            if board.winner == Cell.O: return -1.0
-            return 0.0
+            if board.winner == root_player:
+                return +1.0
+            elif board.winner == other(root_player):
+                return -1.0
+            else:
+                return 0.0
         
         x = encode_board(board)          # tensor [172]
         x = x.unsqueeze(0)               # [1, 172]
         self.model.eval()
         with torch.no_grad():
             v = float(self.model(x).item())
-        return v if board.to_move == Cell.X else -v
+        return v if board.to_move == root_player else -v
 
     # ----------------------
     # Backpropagation
@@ -155,7 +141,6 @@ class MctsValueAgent(Agent):
         while node is not None:
             node.visits += 1
             node.wins += result
-            result = -result
             node = node.parent
 
     # ----------------------
@@ -211,7 +196,7 @@ class MctsValueAgent(Agent):
         # Convert to supervised targets
         result = []
         for s, to_move in states:
-            signed = outcome if to_move == Cell.X else -outcome
+            signed = outcome if to_move == board.winner else -outcome
             result.append((s, signed))
 
         return result

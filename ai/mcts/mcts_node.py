@@ -10,15 +10,13 @@ class MctsNode:
         self.parent = parent
         self.move = move
 
-        self.player_just_moved = other(board.to_move)
-
         # MCTS stats
         self.children: list[MctsNode] = []
         self.visits = 0
-        self.wins = 0.0  # score accumulated for "player_just_moved"
+        self.wins = 0.0
 
         # moves not yet explored
-        self.untried_moves = list(board.legal_moves())
+        self.untried_moves = board.legal_moves()
 
     # ------------------------------------------------------
     # Node helpers
@@ -26,7 +24,7 @@ class MctsNode:
     def is_fully_expanded(self):
         return len(self.untried_moves) == 0
 
-    def best_child(self, c=1.4):
+    def best_child(self, c=1.414):
         from math import sqrt, log
         return max(
             self.children,

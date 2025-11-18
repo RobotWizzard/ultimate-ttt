@@ -2,7 +2,7 @@ from .scene import Scene
 from ui.components import TextInput, Dropdown, Button, CheckboxWithLabel
 from ui.config import SCREEN_HEIGHT, SCREEN_WIDTH, DEFAULT_FONT, SMALL_FONT
 from ai import RandomAgent, MinimaxAgent, MctsAgent, MctsValueAgent
-from ai.eval import simple_eval
+from ai.eval import simple_eval, complex_eval
 
 
 class CompareConfigScene(Scene):
@@ -19,7 +19,7 @@ class CompareConfigScene(Scene):
         self.agent1_label_rect = self.agent1_label_surf.get_rect(top=self.text_rect.top, right=self.text_rect.left-100)
         self.agent1_dropdown = Dropdown(
             (self.agent1_label_rect.centerx-100, self.agent1_label_rect.bottom+20, 200, 40),
-            ["random", "minimax", "mcts_random", "mcts_heuristic", "mcts_learning"],
+            ["random", "minimax_simple", "minimax_complex", "mcts_random", "mcts_heuristic", "mcts_learning"],
             on_select=self.change_agent1
         )
 
@@ -27,7 +27,7 @@ class CompareConfigScene(Scene):
         self.agent2_label_rect = self.agent1_label_surf.get_rect(top=self.text_rect.top, left=self.text_rect.right+100)
         self.agent2_dropdown = Dropdown(
             (self.agent2_label_rect.centerx-100, self.agent2_label_rect.bottom+20, 200, 40),
-            ["random", "minimax", "mcts_random", "mcts_heuristic", "mcts_learning"],
+            ["random", "minimax_simple", "minimax_complex", "mcts_random", "mcts_heuristic", "mcts_learning"],
             on_select=self.change_agent2
         )
 
@@ -58,8 +58,10 @@ class CompareConfigScene(Scene):
     def change_agent1(self, agent_name):
         if agent_name == "random":
             self.agent1 = RandomAgent()
-        elif agent_name == "minimax":
+        elif agent_name == "minimax_simple":
             self.agent1 = MinimaxAgent(simple_eval)
+        elif agent_name == "minimax_complex":
+            self.agent1 = MinimaxAgent(complex_eval)
         elif agent_name == "mcts_random":
             self.agent1 = MctsAgent(use_heuristic=False)
         elif agent_name == "mcts_heuristic":
@@ -70,8 +72,10 @@ class CompareConfigScene(Scene):
     def change_agent2(self, agent_name):
         if agent_name == "random":
             self.agent2 = RandomAgent()
-        elif agent_name == "minimax":
+        elif agent_name == "minimax_simple":
             self.agent2 = MinimaxAgent(simple_eval)
+        elif agent_name == "minimax_complex":
+            self.agent2 = MinimaxAgent(complex_eval)
         elif agent_name == "mcts_random":
             self.agent2 = MctsAgent(use_heuristic=False)
         elif agent_name == "mcts_heuristic":

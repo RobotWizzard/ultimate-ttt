@@ -9,6 +9,14 @@ Move = int
 
 # --- General utility ---
 
+def count_bits(x:int) -> int:
+    """Counts number of set bits in integer x."""
+    count = 0
+    while x:
+        x &= x - 1
+        count += 1
+    return count
+
 def index_to_coords(index:int) -> tuple[int, int]:
     """Converts indices to coordinates in (row, col)."""
     return (index // 3, index % 3)
