@@ -1,7 +1,8 @@
 import random
 import time
+import math
 from ..agent import Agent
-from ..eval import simple_eval
+from ..eval import simple_eval, complex_eval
 from .mcts_node import MctsNode
 from game.board import Board
 from game.cell import Cell, other
@@ -86,17 +87,21 @@ class MctsAgent(Agent):
     
     def rollout_heuristic(self, board: Board, moves: list[Move]) -> Move:
         scores = []
-        root_player = self.root.board.to_move
         for move in moves:
             new_board = board.copy()
             new_board.make_move(move)
-            score = simple_eval(new_board)
-            if root_player == Cell.O:
+            # Evaluate from the current player's perspective
+            score = simple_eval(new_board) 
+            if board.to_move == Cell.O:  # flip for O
                 score = -score
             scores.append(score)
-        best_score_idx = scores.index(max(scores))
-        best_move = moves[best_score_idx]
-        return best_move
+        
+        # Softmax probability distribution for exploration
+        exp_scores = [math.exp(s) for s in scores]
+        total = sum(exp_scores)
+        probs = [s / total for s in exp_scores]
+        return random.choices(moves, weights=probs, k=1)[0]
+
 
     # ------------------------------------------------------
     # Backpropagation (correct perspective switching)
@@ -107,7 +112,11 @@ class MctsAgent(Agent):
         +1 → root player win
         -1 → root player loss
         """
+        root_player = self.root.board.to_move
         while node is not None:
             node.visits += 1
-            node.wins += result
+            if node.player_just_moved == root_player:
+                node.wins += result
+            else:
+                node.wins -= result
             node = node.parent

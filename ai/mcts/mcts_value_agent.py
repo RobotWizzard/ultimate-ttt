@@ -132,15 +132,19 @@ class MctsValueAgent(Agent):
         self.model.eval()
         with torch.no_grad():
             v = float(self.model(x).item())
-        return v if board.to_move == root_player else -v
+        return v
 
     # ----------------------
     # Backpropagation
     # ----------------------
     def _backpropagate(self, node: MctsNode, result: float):
+        root_player = self.root.board.to_move
         while node is not None:
             node.visits += 1
-            node.wins += result
+            if node.player_just_moved == root_player:
+                node.wins += result
+            else:
+                node.wins -= result
             node = node.parent
 
     # ----------------------

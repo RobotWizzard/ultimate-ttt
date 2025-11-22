@@ -9,6 +9,7 @@ class MctsNode:
         self.board = board
         self.parent = parent
         self.move = move
+        self.player_just_moved = other(board.to_move)
 
         # MCTS stats
         self.children: list[MctsNode] = []
